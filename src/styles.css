@@ -574,8 +574,12 @@ a {
 }
 
 .monitor-shell {
-  min-height: 100vh;
-  padding: 26px 30px 20px;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(10px, 1.5vh, 18px);
+  overflow: hidden;
+  padding: clamp(12px, 2vh, 26px) clamp(14px, 2.3vw, 30px) clamp(10px, 1.6vh, 20px);
   background: #101820;
   color: #f8fafc;
 }
@@ -583,33 +587,33 @@ a {
 .monitor-header {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 28px;
+  gap: clamp(14px, 2vw, 28px);
   align-items: center;
-  margin-bottom: 24px;
+  min-height: 0;
 }
 
 .screen-kicker {
   color: #9fb3c8;
-  font-size: 24px;
+  font-size: clamp(14px, 1.55vw, 24px);
   font-weight: 850;
   text-transform: uppercase;
 }
 
 .monitor-header h1 {
-  margin: 6px 0 0;
-  font-size: 64px;
+  margin: clamp(3px, 0.5vh, 6px) 0 0;
+  font-size: clamp(34px, 5.2vw, 64px);
   line-height: 1;
   letter-spacing: 0;
 }
 
 .monitor-summary {
   display: flex;
-  gap: 14px;
+  gap: clamp(8px, 1.1vw, 14px);
 }
 
 .metric {
-  min-width: 150px;
-  padding: 18px 22px;
+  min-width: clamp(100px, 11vw, 150px);
+  padding: clamp(10px, 1.5vh, 18px) clamp(12px, 1.7vw, 22px);
   border: 1px solid #314253;
   border-radius: 8px;
   background: #172331;
@@ -621,18 +625,21 @@ a {
 }
 
 .metric strong {
-  font-size: 46px;
+  font-size: clamp(26px, 3.8vw, 46px);
   line-height: 1;
 }
 
 .metric span {
-  margin-top: 8px;
+  margin-top: clamp(4px, 0.7vh, 8px);
   color: #aebdcb;
-  font-size: 18px;
+  font-size: clamp(12px, 1.4vw, 18px);
   font-weight: 800;
 }
 
 .monitor-board {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(34px, 0.55fr) repeat(var(--monitor-row-count), minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid #314253;
   border-radius: 8px;
@@ -641,12 +648,20 @@ a {
 
 .monitor-row {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1.6fr 0.8fr 0.65fr 1fr 0.9fr;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(116px, 1fr) minmax(180px, 1.6fr) minmax(92px, 0.8fr) minmax(72px, 0.65fr) minmax(132px, 1fr) minmax(122px, 0.9fr);
   align-items: center;
-  gap: 22px;
-  min-height: 86px;
-  padding: 0 24px;
+  gap: clamp(8px, 1.4vw, 22px);
+  min-height: 0;
+  padding: 0 clamp(10px, 1.8vw, 24px);
   border-bottom: 1px solid #2c3c4e;
+}
+
+.monitor-row > span,
+.monitor-row > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .monitor-row:last-child {
@@ -654,21 +669,21 @@ a {
 }
 
 .monitor-row-head {
-  min-height: 58px;
+  min-height: 0;
   color: #aebdcb;
   background: #1e2b39;
-  font-size: 18px;
+  font-size: clamp(11px, 1.25vw, 18px);
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .monitor-row:not(.monitor-row-head) {
-  font-size: 28px;
+  font-size: clamp(18px, 2.2vw, 28px);
   font-weight: 750;
 }
 
 .monitor-row strong {
-  font-size: 32px;
+  font-size: clamp(20px, 2.55vw, 32px);
 }
 
 .monitor-row-alert {
@@ -677,38 +692,42 @@ a {
 }
 
 .monitor-row .status-pill {
-  min-width: 172px;
-  min-height: 52px;
-  font-size: 20px;
+  min-width: clamp(118px, 13vw, 172px);
+  min-height: clamp(34px, 5vh, 52px);
+  padding: 0 clamp(10px, 1.4vw, 18px);
+  font-size: clamp(13px, 1.5vw, 20px);
 }
 
 .monitor-row .priority-pill {
-  min-width: 126px;
-  min-height: 50px;
-  font-size: 20px;
+  min-width: clamp(82px, 9vw, 126px);
+  min-height: clamp(32px, 4.8vh, 50px);
+  font-size: clamp(13px, 1.5vw, 20px);
 }
 
 .monitor-row .team-badge {
-  min-width: 142px;
-  min-height: 50px;
-  font-size: 18px;
+  min-width: clamp(104px, 11vw, 142px);
+  min-height: clamp(32px, 4.8vh, 50px);
+  gap: clamp(4px, 0.6vw, 8px);
+  padding: 0 clamp(8px, 1vw, 14px);
+  font-size: clamp(12px, 1.35vw, 18px);
 }
 
 .view-links {
   display: flex;
-  gap: 14px;
-  margin-top: 18px;
+  gap: clamp(8px, 1vw, 14px);
+  min-height: 0;
 }
 
 .view-links a {
-  min-height: 52px;
+  min-height: clamp(36px, 5.2vh, 52px);
   display: inline-flex;
   align-items: center;
   gap: 10px;
   border-radius: 8px;
-  padding: 0 18px;
+  padding: 0 clamp(12px, 1.4vw, 18px);
   color: #07101f;
   background: #e8f2ff;
+  font-size: clamp(13px, 1.3vw, 16px);
   font-weight: 850;
 }
 
@@ -1019,11 +1038,12 @@ a {
 
 @media (max-width: 980px) {
   .monitor-shell {
-    padding: 18px;
+    padding: 12px;
   }
 
   .monitor-header {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .monitor-summary {
@@ -1032,15 +1052,42 @@ a {
   }
 
   .monitor-header h1 {
-    font-size: 48px;
+    font-size: clamp(32px, 7vw, 48px);
   }
 
   .monitor-board {
-    overflow-x: auto;
+    overflow: hidden;
   }
 
   .monitor-row {
-    min-width: 1120px;
+    grid-template-columns: minmax(64px, 0.7fr) minmax(88px, 0.95fr) minmax(130px, 1.45fr) minmax(70px, 0.75fr) minmax(56px, 0.55fr) minmax(96px, 0.95fr) minmax(88px, 0.8fr);
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .monitor-row-head {
+    font-size: 10px;
+  }
+
+  .monitor-row:not(.monitor-row-head) {
+    font-size: clamp(12px, 2vw, 18px);
+  }
+
+  .monitor-row strong {
+    font-size: clamp(14px, 2.3vw, 20px);
+  }
+
+  .monitor-row .status-pill,
+  .monitor-row .priority-pill,
+  .monitor-row .team-badge {
+    min-width: 0;
+    width: 100%;
+    padding: 0 6px;
+    font-size: clamp(10px, 1.7vw, 13px);
+  }
+
+  .monitor-row .team-badge svg {
+    display: none;
   }
 
   .work-screen-header {

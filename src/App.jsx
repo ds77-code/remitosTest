@@ -223,6 +223,15 @@ function App() {
     return () => window.removeEventListener('storage', syncRemitos);
   }, []);
 
+  useEffect(() => {
+    const refreshFromStorage = () => {
+      setRemitos(loadStoredRemitos());
+    };
+    const refreshId = window.setInterval(refreshFromStorage, 60000);
+
+    return () => window.clearInterval(refreshId);
+  }, []);
+
   const selectRemito = (id) => {
     setSelectedId(id);
   };
@@ -245,6 +254,14 @@ function MonitorView({ remitos }) {
   const pendingCount = remitos.filter((remito) => remito.status !== 'Completado').length;
   const takenCount = remitos.filter((remito) => remito.assignedTeam).length;
 
+  useEffect(() => {
+    const reloadId = window.setInterval(() => {
+      window.location.reload();
+    }, 60000);
+
+    return () => window.clearInterval(reloadId);
+  }, []);
+
   return (
     <main className="monitor-shell">
       <header className="monitor-header">
@@ -259,7 +276,11 @@ function MonitorView({ remitos }) {
         </div>
       </header>
 
-      <section className="monitor-board" aria-label="Remitos ordenados por prioridad">
+      <section
+        className="monitor-board"
+        aria-label="Remitos ordenados por prioridad"
+        style={{ '--monitor-row-count': remitos.length }}
+      >
         <div className="monitor-row monitor-row-head">
           <span>Prioridad</span>
           <span>Remito</span>
