@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Box,
@@ -54,6 +54,7 @@ const priorityConfig = {
 };
 
 const teams = ['1', '2', '3', '4'];
+const storageKey = 'remitos-test-state';
 
 const remitosBase = [
   {
@@ -185,7 +186,7 @@ const statusSort = {
 };
 
 function App() {
-  const [remitos, setRemitos] = useState(remitosBase);
+  const [remitos, setRemitos] = useState(() => loadStoredRemitos());
   const [selectedId, setSelectedId] = useState('RMT-000127');
   const params = new URLSearchParams(window.location.search);
   const view = params.get('view') === 'monitor' ? 'monitor' : 'equipo';
@@ -200,6 +201,24 @@ function App() {
       current.map((remito) => (remito.id === id ? { ...remito, ...patch } : remito)),
     );
   };
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(remitos));
+  }, [remitos]);
+
+  useEffect(() => {
+    const syncRemitos = (event) => {
+      if (event.key !== storageKey || !event.newValue) return;
+      try {
+        setRemitos(JSON.parse(event.newValue));
+      } catch {
+        setRemitos(remitosBase);
+      }
+    };
+
+    window.addEventListener('storage', syncRemitos);
+    return () => window.removeEventListener('storage', syncRemitos);
+  }, []);
 
   const selectRemito = (id) => {
     setSelectedId(id);
@@ -488,6 +507,18 @@ function sortRemitos(remitos) {
     if (priorityDiff !== 0) return priorityDiff;
     return a.time.localeCompare(b.time);
   });
+}
+
+function loadStoredRemitos() {
+  try {
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return remitosBase;
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return remitosBase;
+    return parsed;
+  } catch {
+    return remitosBase;
+  }
 }
 
 function Metric({ label, value }) {
