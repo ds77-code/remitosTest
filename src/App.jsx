@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  ArrowLeft,
   Box,
   Check,
   ChevronRight,
   Clock3,
   FileText,
+  Info,
   ListChecks,
   MapPin,
   Monitor,
@@ -191,6 +193,7 @@ function App() {
   const params = new URLSearchParams(window.location.search);
   const view = params.get('view') === 'monitor' ? 'monitor' : 'equipo';
   const teamId = params.get('equipo') || '1';
+  const initialWorkRemitoId = params.get('remito');
 
   const sortedTodayRemitos = useMemo(() => sortRemitos(remitos), [remitos]);
   const selectedRemito =
@@ -231,6 +234,7 @@ function App() {
       remitos={remitos}
       selectedRemito={selectedRemito}
       teamId={teamId}
+      initialWorkRemitoId={initialWorkRemitoId}
       onSelect={selectRemito}
       onUpdate={updateRemito}
     />
@@ -293,10 +297,12 @@ function MonitorView({ remitos }) {
   );
 }
 
-function TeamView({ remitos, selectedRemito, teamId, onSelect, onUpdate }) {
+function TeamView({ remitos, selectedRemito, teamId, initialWorkRemitoId, onSelect, onUpdate }) {
   const [query, setQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeStatus, setActiveStatus] = useState('Todos');
+  const [workRemitoId, setWorkRemitoId] = useState(initialWorkRemitoId);
+  const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
   const availableRemitos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -315,6 +321,11 @@ function TeamView({ remitos, selectedRemito, teamId, onSelect, onUpdate }) {
 
   const canTake = !selectedRemito.assignedTeam;
   const isMine = selectedRemito.assignedTeam === teamId;
+  const workRemito = remitos.find((remito) => remito.id === workRemitoId);
+
+  useEffect(() => {
+    setSelectedProductIndex(0);
+  }, [workRemitoId]);
 
   const takeRemito = () => {
     if (!canTake) return;
@@ -333,6 +344,24 @@ function TeamView({ remitos, selectedRemito, teamId, onSelect, onUpdate }) {
       assignedTeam: status === 'Completado' ? teamId : selectedRemito.assignedTeam || teamId,
     });
   };
+
+  const openRemito = (id) => {
+    onSelect(id);
+    setWorkRemitoId(id);
+  };
+
+  if (workRemito) {
+    return (
+      <WorkModeView
+        remito={workRemito}
+        teamId={teamId}
+        selectedProductIndex={selectedProductIndex}
+        onSelectProduct={setSelectedProductIndex}
+        onBack={() => setWorkRemitoId(null)}
+        onUpdate={onUpdate}
+      />
+    );
+  }
 
   return (
     <main className="app-shell">
@@ -397,7 +426,7 @@ function TeamView({ remitos, selectedRemito, teamId, onSelect, onUpdate }) {
               key={remito.id}
               className={`remito-row team-remito-row ${remito.id === selectedRemito.id ? 'remito-row-active' : ''}`}
               type="button"
-              onClick={() => onSelect(remito.id)}
+              onClick={() => openRemito(remito.id)}
             >
               <PriorityPill priority={remito.priority} />
               <strong>{remito.id}</strong>
@@ -499,6 +528,181 @@ function TeamView({ remitos, selectedRemito, teamId, onSelect, onUpdate }) {
   );
 }
 
+function WorkModeView({
+  remito,
+  teamId,
+  selectedProductIndex,
+  onSelectProduct,
+  onBack,
+  onUpdate,
+}) {
+  const selectedProduct = remito.products[selectedProductIndex] ?? remito.products[0];
+  const selectedProductDetail = getProductDetail(selectedProduct, selectedProductIndex);
+  const canTake = !remito.assignedTeam;
+  const isMine = remito.assignedTeam === teamId;
+  const lockedByOtherTeam = remito.assignedTeam && !isMine;
+
+  const takeRemito = () => {
+    if (!canTake) return;
+    onUpdate(remito.id, { assignedTeam: teamId, status: 'En preparacion' });
+  };
+
+  const releaseRemito = () => {
+    if (!isMine) return;
+    onUpdate(remito.id, { assignedTeam: null, status: 'Pendiente' });
+  };
+
+  const updateStatus = (status) => {
+    if (lockedByOtherTeam) return;
+    onUpdate(remito.id, {
+      status,
+      assignedTeam: status === 'Completado' ? teamId : remito.assignedTeam || teamId,
+    });
+  };
+
+  return (
+    <main className="work-screen-shell">
+      <header className="work-screen-header">
+        <button className="back-button" type="button" onClick={onBack}>
+          <ArrowLeft size={30} />
+          Lista
+        </button>
+        <div className="work-screen-title">
+          <strong>{remito.id}</strong>
+          <span>{remito.client}</span>
+        </div>
+        <div className="work-screen-state">
+          <TeamBadge team={remito.assignedTeam} />
+          <StatusPill status={remito.status} />
+        </div>
+      </header>
+
+      <section className="work-screen-main" aria-label={`Preparacion de ${remito.id}`}>
+        <aside className="work-side-panel">
+          <div>
+            <span className="panel-label">Equipo</span>
+            <strong>{teamId}</strong>
+          </div>
+          <div>
+            <span className="panel-label">Zona</span>
+            <strong>{remito.zone}</strong>
+          </div>
+          <div>
+            <span className="panel-label">Horario</span>
+            <strong>{remito.time}</strong>
+          </div>
+          <div>
+            <span className="panel-label">Direccion</span>
+            <p>{remito.address}</p>
+          </div>
+          <div>
+            <span className="panel-label">Observaciones</span>
+            <p>{remito.notes}</p>
+          </div>
+
+          <div className="work-assignment-actions">
+            {canTake && (
+              <button className="take-button take-button-wide" type="button" onClick={takeRemito}>
+                <Play size={26} />
+                Tomar remito
+              </button>
+            )}
+            {isMine && (
+              <button className="release-button release-button-wide" type="button" onClick={releaseRemito}>
+                Liberar remito
+              </button>
+            )}
+            {lockedByOtherTeam && (
+              <span className="locked-note locked-note-large">
+                <AlertTriangle size={24} />
+                Lo tiene otro equipo
+              </span>
+            )}
+          </div>
+        </aside>
+
+        <section className="pick-panel">
+          <div className="pick-panel-head">
+            <div>
+              <span className="panel-label">Productos</span>
+              <h1>Preparacion</h1>
+            </div>
+            <strong>{remito.products.length} items</strong>
+          </div>
+
+          <div className="pick-list">
+            {remito.products.map((product, index) => {
+              const detail = getProductDetail(product, index);
+              return (
+                <button
+                  key={product.name}
+                  className={
+                    index === selectedProductIndex
+                      ? 'pick-product pick-product-active'
+                      : 'pick-product'
+                  }
+                  type="button"
+                  onClick={() => onSelectProduct(index)}
+                >
+                  <span className="pick-product-code">{detail.sku}</span>
+                  <span className="pick-product-name">{product.name}</span>
+                  <strong>{product.quantity}</strong>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="product-detail-window" aria-label="Detalle ampliado del producto">
+            <div className="product-detail-title">
+              <Info size={34} />
+              <div>
+                <span>Producto seleccionado</span>
+                <strong>{selectedProduct.name}</strong>
+              </div>
+            </div>
+            <div className="product-detail-grid">
+              <DetailBox label="Cantidad" value={selectedProduct.quantity} highlight />
+              <DetailBox label="Unidad" value={selectedProductDetail.unit} />
+              <DetailBox label="Ubicacion" value={selectedProductDetail.location} />
+              <DetailBox label="Lote" value={selectedProductDetail.batch} />
+              <DetailBox label="SKU" value={selectedProductDetail.sku} />
+              <DetailBox label="Envase" value={selectedProductDetail.packageType} />
+            </div>
+            <p className="product-detail-note">{selectedProductDetail.note}</p>
+          </div>
+        </section>
+      </section>
+
+      <section className="work-status-bar" aria-label="Cambiar estado del remito">
+        {Object.entries(statusConfig).map(([status, config]) => {
+          const Icon = config.icon;
+          return (
+            <button
+              key={status}
+              className={`status-action ${config.actionClass}`}
+              type="button"
+              onClick={() => updateStatus(status)}
+              disabled={Boolean(lockedByOtherTeam)}
+            >
+              <Icon size={32} />
+              <span>{config.label}</span>
+            </button>
+          );
+        })}
+      </section>
+    </main>
+  );
+}
+
+function DetailBox({ label, value, highlight = false }) {
+  return (
+    <div className={highlight ? 'detail-box detail-box-highlight' : 'detail-box'}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 function sortRemitos(remitos) {
   return [...remitos].sort((a, b) => {
     const statusDiff = statusSort[a.status] - statusSort[b.status];
@@ -519,6 +723,24 @@ function loadStoredRemitos() {
   } catch {
     return remitosBase;
   }
+}
+
+function getProductDetail(product, index) {
+  const aisle = ['A-03', 'B-11', 'C-07', 'D-02'][index % 4];
+  const shelf = ['Estante 2', 'Estante 5', 'Rack bajo', 'Rack alto'][index % 4];
+  const units = ['Bulto', 'Unidad', 'Caja', 'Pack'][index % 4];
+
+  return {
+    sku: `SKU-${String(index + 1).padStart(3, '0')}-${product.name.slice(0, 3).toUpperCase()}`,
+    unit: units[index % units.length],
+    location: `${aisle} / ${shelf}`,
+    batch: `L-${202606 + index}`,
+    packageType: product.quantity > 20 ? 'Caja cerrada' : 'Unidad suelta',
+    note:
+      product.quantity > 20
+        ? 'Preparar primero y controlar que el bulto este cerrado.'
+        : 'Separar en mesa de control y verificar cantidad antes de confirmar.',
+  };
 }
 
 function Metric({ label, value }) {
