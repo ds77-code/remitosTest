@@ -1,16 +1,21 @@
 import { useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   Box,
   Check,
   ChevronRight,
   Clock3,
   FileText,
+  ListChecks,
   MapPin,
-  Menu,
+  Monitor,
   PackageOpen,
   PauseCircle,
+  Play,
   Search,
   SlidersHorizontal,
+  TabletSmartphone,
+  Truck,
   User,
   ClipboardList,
 } from 'lucide-react';
@@ -23,7 +28,7 @@ const statusConfig = {
     icon: Check,
   },
   'En preparacion': {
-    label: 'En preparación',
+    label: 'En preparacion',
     pillClass: 'status-preparing',
     actionClass: 'action-preparing',
     icon: Box,
@@ -42,14 +47,26 @@ const statusConfig = {
   },
 };
 
+const priorityConfig = {
+  Alta: { label: 'Alta', className: 'priority-high', value: 3 },
+  Media: { label: 'Media', className: 'priority-medium', value: 2 },
+  Baja: { label: 'Baja', className: 'priority-low', value: 1 },
+};
+
+const teams = ['1', '2', '3', '4'];
+
 const remitosBase = [
   {
     id: 'RMT-000125',
     client: 'Distribuidora del Norte',
-    date: '24/05/2025 08:15',
+    date: '03/06/2026 08:15',
+    time: '08:15',
+    priority: 'Media',
     status: 'Completado',
-    address: 'Ruta 9 Km 721, Córdoba, Córdoba',
-    notes: 'Pedido recibido completo por depósito central.',
+    assignedTeam: '2',
+    zone: 'Norte',
+    address: 'Ruta 9 Km 721, Cordoba',
+    notes: 'Pedido recibido completo por deposito central.',
     products: [
       { name: 'Harina 000 1kg', quantity: 18 },
       { name: 'Aceite girasol 900ml', quantity: 24 },
@@ -59,36 +76,48 @@ const remitosBase = [
   {
     id: 'RMT-000126',
     client: 'Supermercado Central',
-    date: '24/05/2025 09:30',
+    date: '03/06/2026 09:30',
+    time: '09:30',
+    priority: 'Alta',
     status: 'En preparacion',
-    address: 'Bv. Chacabuco 814, Córdoba, Córdoba',
-    notes: 'Separar mercadería refrigerada al final de la carga.',
+    assignedTeam: '3',
+    zone: 'Centro',
+    address: 'Bv. Chacabuco 814, Cordoba',
+    notes: 'Separar mercaderia refrigerada al final de la carga.',
     products: [
       { name: 'Leche entera 1L', quantity: 36 },
       { name: 'Galletitas surtidas', quantity: 20 },
-      { name: 'Café molido 500g', quantity: 8 },
+      { name: 'Cafe molido 500g', quantity: 8 },
     ],
   },
   {
     id: 'RMT-000127',
-    client: 'Almacén San Martín',
-    date: '24/05/2025 10:45',
+    client: 'Almacen San Martin',
+    date: '03/06/2026 10:45',
+    time: '10:45',
+    priority: 'Alta',
     status: 'Pendiente',
-    address: 'Av. San Martín 2450, Córdoba, Córdoba',
+    assignedTeam: null,
+    zone: 'Centro',
+    address: 'Av. San Martin 2450, Cordoba',
     notes: 'Entregar en horario comercial. Llamar antes de entregar.',
     products: [
       { name: 'Yerba Mate 1kg', quantity: 10 },
-      { name: 'Azúcar 1kg', quantity: 20 },
-      { name: 'Fideos Tallarín 500g', quantity: 15 },
+      { name: 'Azucar 1kg', quantity: 20 },
+      { name: 'Fideos Tallarin 500g', quantity: 15 },
     ],
   },
   {
     id: 'RMT-000128',
     client: 'Mayorista Express',
-    date: '24/05/2025 11:20',
+    date: '03/06/2026 11:20',
+    time: '11:20',
+    priority: 'Alta',
     status: 'Retrasado',
-    address: 'Av. Circunvalación 3350, Córdoba, Córdoba',
-    notes: 'Cliente solicitó prioridad por cierre de recepción a las 13:00.',
+    assignedTeam: '1',
+    zone: 'Sur',
+    address: 'Av. Circunvalacion 3350, Cordoba',
+    notes: 'Cliente solicito prioridad por cierre de recepcion a las 13:00.',
     products: [
       { name: 'Tomate triturado 520g', quantity: 48 },
       { name: 'Mayonesa 475g', quantity: 16 },
@@ -98,68 +127,216 @@ const remitosBase = [
   {
     id: 'RMT-000129',
     client: 'Kiosco 24 Horas',
-    date: '24/05/2025 12:10',
+    date: '03/06/2026 12:10',
+    time: '12:10',
+    priority: 'Baja',
     status: 'Pendiente',
-    address: 'La Rioja 1055, Córdoba, Córdoba',
-    notes: 'Dejar la mercadería con encargado de turno.',
+    assignedTeam: null,
+    zone: 'Nueva Cordoba',
+    address: 'La Rioja 1055, Cordoba',
+    notes: 'Dejar la mercaderia con encargado de turno.',
     products: [
       { name: 'Agua mineral 500ml', quantity: 24 },
       { name: 'Alfajor chocolate', quantity: 60 },
       { name: 'Papas fritas 45g', quantity: 30 },
     ],
   },
+  {
+    id: 'RMT-000130',
+    client: 'Autoservicio Patagonia',
+    date: '03/06/2026 13:00',
+    time: '13:00',
+    priority: 'Media',
+    status: 'Pendiente',
+    assignedTeam: null,
+    zone: 'Oeste',
+    address: 'Santa Ana 4020, Cordoba',
+    notes: 'Descarga por porton lateral.',
+    products: [
+      { name: 'Detergente 750ml', quantity: 18 },
+      { name: 'Lavandina 1L', quantity: 20 },
+      { name: 'Rollo cocina', quantity: 14 },
+    ],
+  },
+  {
+    id: 'RMT-000131',
+    client: 'Mercado Los Aromos',
+    date: '03/06/2026 14:15',
+    time: '14:15',
+    priority: 'Media',
+    status: 'En preparacion',
+    assignedTeam: '4',
+    zone: 'Este',
+    address: 'Av. Sabattini 1880, Cordoba',
+    notes: 'Verificar cajas cerradas antes de salir.',
+    products: [
+      { name: 'Pure de tomate 520g', quantity: 30 },
+      { name: 'Fideos guiseros 500g', quantity: 25 },
+      { name: 'Arvejas lata', quantity: 18 },
+    ],
+  },
 ];
+
+const statusSort = {
+  Retrasado: 0,
+  Pendiente: 1,
+  'En preparacion': 2,
+  Completado: 3,
+};
 
 function App() {
   const [remitos, setRemitos] = useState(remitosBase);
   const [selectedId, setSelectedId] = useState('RMT-000127');
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view') === 'monitor' ? 'monitor' : 'equipo';
+  const teamId = params.get('equipo') || '1';
+
+  const sortedTodayRemitos = useMemo(() => sortRemitos(remitos), [remitos]);
+  const selectedRemito =
+    remitos.find((remito) => remito.id === selectedId) ?? sortedTodayRemitos[0] ?? remitos[0];
+
+  const updateRemito = (id, patch) => {
+    setRemitos((current) =>
+      current.map((remito) => (remito.id === id ? { ...remito, ...patch } : remito)),
+    );
+  };
+
+  const selectRemito = (id) => {
+    setSelectedId(id);
+  };
+
+  return view === 'monitor' ? (
+    <MonitorView remitos={sortedTodayRemitos} />
+  ) : (
+    <TeamView
+      remitos={remitos}
+      selectedRemito={selectedRemito}
+      teamId={teamId}
+      onSelect={selectRemito}
+      onUpdate={updateRemito}
+    />
+  );
+}
+
+function MonitorView({ remitos }) {
+  const pendingCount = remitos.filter((remito) => remito.status !== 'Completado').length;
+  const takenCount = remitos.filter((remito) => remito.assignedTeam).length;
+
+  return (
+    <main className="monitor-shell">
+      <header className="monitor-header">
+        <div>
+          <span className="screen-kicker">Monitor general</span>
+          <h1>Remitos del dia</h1>
+        </div>
+        <div className="monitor-summary" aria-label="Resumen operativo">
+          <Metric label="Pendientes" value={pendingCount} />
+          <Metric label="Tomados" value={takenCount} />
+          <Metric label="Total" value={remitos.length} />
+        </div>
+      </header>
+
+      <section className="monitor-board" aria-label="Remitos ordenados por prioridad">
+        <div className="monitor-row monitor-row-head">
+          <span>Prioridad</span>
+          <span>Remito</span>
+          <span>Cliente</span>
+          <span>Zona</span>
+          <span>Hora</span>
+          <span>Estado</span>
+          <span>Equipo</span>
+        </div>
+
+        {remitos.map((remito) => (
+          <div className={`monitor-row ${remito.status === 'Retrasado' ? 'monitor-row-alert' : ''}`} key={remito.id}>
+            <PriorityPill priority={remito.priority} />
+            <strong>{remito.id}</strong>
+            <span>{remito.client}</span>
+            <span>{remito.zone}</span>
+            <span>{remito.time}</span>
+            <StatusPill status={remito.status} />
+            <TeamBadge team={remito.assignedTeam} />
+          </div>
+        ))}
+      </section>
+
+      <footer className="view-links">
+        <a href="?view=equipo&equipo=1">
+          <TabletSmartphone size={22} />
+          Equipo 1
+        </a>
+        <a href="?view=equipo&equipo=2">
+          <TabletSmartphone size={22} />
+          Equipo 2
+        </a>
+      </footer>
+    </main>
+  );
+}
+
+function TeamView({ remitos, selectedRemito, teamId, onSelect, onUpdate }) {
   const [query, setQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeStatus, setActiveStatus] = useState('Todos');
 
-  const statusOptions = ['Todos', ...Object.keys(statusConfig)];
-
-  const filteredRemitos = useMemo(() => {
+  const availableRemitos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return remitos.filter((remito) => {
+    return sortRemitos(remitos).filter((remito) => {
+      const isVisibleForTeam = !remito.assignedTeam || remito.assignedTeam === teamId;
       const matchesQuery =
         !normalizedQuery ||
         remito.id.toLowerCase().includes(normalizedQuery) ||
-        remito.client.toLowerCase().includes(normalizedQuery);
+        remito.client.toLowerCase().includes(normalizedQuery) ||
+        remito.zone.toLowerCase().includes(normalizedQuery);
       const matchesStatus = activeStatus === 'Todos' || remito.status === activeStatus;
-      return matchesQuery && matchesStatus;
+      return isVisibleForTeam && matchesQuery && matchesStatus;
     });
-  }, [activeStatus, query, remitos]);
+  }, [activeStatus, query, remitos, teamId]);
 
-  const selectedRemito =
-    remitos.find((remito) => remito.id === selectedId) ?? filteredRemitos[0] ?? remitos[0];
+  const canTake = !selectedRemito.assignedTeam;
+  const isMine = selectedRemito.assignedTeam === teamId;
+
+  const takeRemito = () => {
+    if (!canTake) return;
+    onUpdate(selectedRemito.id, { assignedTeam: teamId, status: 'En preparacion' });
+  };
+
+  const releaseRemito = () => {
+    if (!isMine) return;
+    onUpdate(selectedRemito.id, { assignedTeam: null, status: 'Pendiente' });
+  };
 
   const updateSelectedStatus = (status) => {
-    setRemitos((current) =>
-      current.map((remito) => (remito.id === selectedRemito.id ? { ...remito, status } : remito)),
-    );
+    if (!isMine && selectedRemito.assignedTeam) return;
+    onUpdate(selectedRemito.id, {
+      status,
+      assignedTeam: status === 'Completado' ? teamId : selectedRemito.assignedTeam || teamId,
+    });
   };
 
   return (
     <main className="app-shell">
-      <section className="phone-frame" aria-label="Visualizador de remitos">
-        <header className="topbar">
-          <button className="icon-button" type="button" aria-label="Abrir menú">
-            <Menu size={30} strokeWidth={2.4} />
-          </button>
+      <section className="phone-frame" aria-label={`Vista del equipo ${teamId}`}>
+        <header className="topbar team-topbar">
+          <div className="team-mark">
+            <Truck size={26} />
+            <span>Equipo {teamId}</span>
+          </div>
           <h1>Remitos</h1>
-          <span className="topbar-spacer" />
+          <a className="icon-link" href="?view=monitor" aria-label="Abrir monitor">
+            <Monitor size={28} />
+          </a>
         </header>
 
-        <section className="tools-row" aria-label="Herramientas de búsqueda">
+        <section className="tools-row" aria-label="Herramientas de busqueda">
           <label className="search-box">
             <Search size={28} />
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar remito o cliente..."
+              placeholder="Buscar remito, cliente o zona..."
             />
           </label>
           <button
@@ -174,7 +351,7 @@ function App() {
 
         {filterOpen && (
           <section className="filter-panel" aria-label="Filtrar por estado">
-            {statusOptions.map((status) => (
+            {['Todos', ...Object.keys(statusConfig)].map((status) => (
               <button
                 key={status}
                 className={activeStatus === status ? 'chip chip-active' : 'chip'}
@@ -187,46 +364,68 @@ function App() {
           </section>
         )}
 
-        <section className="remitos-table" aria-label="Listado de remitos">
-          <div className="table-head">
-            <span>N° Remito</span>
+        <section className="remitos-table" aria-label="Listado de remitos para tomar">
+          <div className="table-head team-table-head">
+            <span>Prioridad</span>
+            <span>Remito</span>
             <span>Cliente</span>
-            <span>Fecha / Hora</span>
             <span>Estado</span>
             <span />
           </div>
 
-          {filteredRemitos.map((remito) => {
-            const status = statusConfig[remito.status];
-            return (
-              <button
-                key={remito.id}
-                className={`remito-row ${remito.id === selectedRemito.id ? 'remito-row-active' : ''}`}
-                type="button"
-                onClick={() => setSelectedId(remito.id)}
-              >
-                <strong>{remito.id}</strong>
-                <span>{remito.client}</span>
-                <span>{remito.date}</span>
-                <span className={`status-pill ${status.pillClass}`}>{status.label}</span>
-                <ChevronRight className="row-chevron" size={28} />
-              </button>
-            );
-          })}
+          {availableRemitos.map((remito) => (
+            <button
+              key={remito.id}
+              className={`remito-row team-remito-row ${remito.id === selectedRemito.id ? 'remito-row-active' : ''}`}
+              type="button"
+              onClick={() => onSelect(remito.id)}
+            >
+              <PriorityPill priority={remito.priority} />
+              <strong>{remito.id}</strong>
+              <span>{remito.client}</span>
+              <span className="row-meta">{remito.time} - {remito.zone}</span>
+              <StatusPill status={remito.status} />
+              <ChevronRight className="row-chevron" size={28} />
+            </button>
+          ))}
         </section>
 
-        <section className="detail-card" aria-label={`Detalle de ${selectedRemito.id}`}>
+        <section className="work-card" aria-label={`Trabajo sobre ${selectedRemito.id}`}>
           <div className="detail-heading">
             <div className="document-icon">
               <FileText size={30} />
             </div>
-            <h2>{selectedRemito.id}</h2>
+            <div>
+              <h2>{selectedRemito.id}</h2>
+              <span className="work-subtitle">{selectedRemito.zone} - {selectedRemito.time}</span>
+            </div>
             <StatusPill status={selectedRemito.status} />
+          </div>
+
+          <div className="assignment-panel">
+            <TeamBadge team={selectedRemito.assignedTeam} />
+            {canTake && (
+              <button className="take-button" type="button" onClick={takeRemito}>
+                <Play size={24} />
+                Tomar remito
+              </button>
+            )}
+            {isMine && (
+              <button className="release-button" type="button" onClick={releaseRemito}>
+                Liberar
+              </button>
+            )}
+            {!canTake && !isMine && (
+              <span className="locked-note">
+                <AlertTriangle size={20} />
+                Lo tiene otro equipo
+              </span>
+            )}
           </div>
 
           <div className="detail-info">
             <InfoLine icon={User} label="Cliente" value={selectedRemito.client} strong />
-            <InfoLine icon={MapPin} label="Dirección" value={selectedRemito.address} />
+            <InfoLine icon={MapPin} label="Direccion" value={selectedRemito.address} />
             <InfoLine icon={ClipboardList} label="Observaciones" value={selectedRemito.notes} />
           </div>
 
@@ -252,12 +451,14 @@ function App() {
         <section className="status-actions" aria-label="Cambiar estado del remito">
           {Object.entries(statusConfig).map(([status, config]) => {
             const Icon = config.icon;
+            const disabled = !isMine && selectedRemito.assignedTeam;
             return (
               <button
                 key={status}
                 className={`status-action ${config.actionClass}`}
                 type="button"
                 onClick={() => updateSelectedStatus(status)}
+                disabled={disabled}
               >
                 <Icon size={34} />
                 <span>{config.label}</span>
@@ -265,8 +466,55 @@ function App() {
             );
           })}
         </section>
+
+        <section className="team-switcher" aria-label="Cambiar equipo">
+          <span>Ver como</span>
+          {teams.map((team) => (
+            <a className={team === teamId ? 'team-link team-link-active' : 'team-link'} href={`?view=equipo&equipo=${team}`} key={team}>
+              {team}
+            </a>
+          ))}
+        </section>
       </section>
     </main>
+  );
+}
+
+function sortRemitos(remitos) {
+  return [...remitos].sort((a, b) => {
+    const statusDiff = statusSort[a.status] - statusSort[b.status];
+    if (statusDiff !== 0) return statusDiff;
+    const priorityDiff = priorityConfig[b.priority].value - priorityConfig[a.priority].value;
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.time.localeCompare(b.time);
+  });
+}
+
+function Metric({ label, value }) {
+  return (
+    <div className="metric">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function PriorityPill({ priority }) {
+  const config = priorityConfig[priority];
+  return <span className={`priority-pill ${config.className}`}>{config.label}</span>;
+}
+
+function TeamBadge({ team }) {
+  return team ? (
+    <span className="team-badge">
+      <Truck size={22} />
+      Equipo {team}
+    </span>
+  ) : (
+    <span className="team-badge team-badge-free">
+      <ListChecks size={22} />
+      Libre
+    </span>
   );
 }
 
